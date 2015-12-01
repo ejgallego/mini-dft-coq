@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=1024, user-scalable=no">
+
+  <title>Adventures in the not so complex space</title>
+
+  <!-- Required stylesheet -->
+  <link rel="stylesheet" media="screen" href="core/deck.core.css">
+
+  <!-- Extension CSS files go here. Remove or add as needed. -->
+  <link rel="stylesheet" media="screen" href="extensions/goto/deck.goto.css">
+  <link rel="stylesheet" media="screen" href="extensions/menu/deck.menu.css">
+  <link rel="stylesheet" media="screen" href="extensions/navigation/deck.navigation.css">
+  <link rel="stylesheet" media="screen" href="extensions/status/deck.status.css">
+  <link rel="stylesheet" media="screen" href="extensions/scale/deck.scale.css">
+
+  <!-- Style theme. More available in /themes/style/ or create your own. -->
+  <link rel="stylesheet" media="screen" href="themes/style/web-2.0.css">
+
+  <!-- Transition theme. More available in /themes/transition/ or create your own. -->
+  <link rel="stylesheet" media="screen" href="themes/transition/horizontal-slide.css">
+
+  <!-- Basic black and white print styles -->
+  <link rel="stylesheet" media="print" href="core/print.css">
+
+  <!-- Required Modernizr file -->
+  <script src="modernizr.custom.js"></script>
+
+  <!-- My own style theme -->
+  <link rel="stylesheet" media="screen" href="emilio.css">
+
+</head>
+<body>
+  <div class="deck-container">
+
+    <!-- http://stackoverflow.com/questions/18184927/image-hover-transition-for-span-css -->
+    <section class="slide">
+        <hgroup style="text-align: center; padding-top: 2em">
+            <h2>Adventures in the <small>not so</small> complex space.</h2>
+            <h6 style="margin-top: "margin>Un petit exercise en la theorie de DSP</h6>
+            <h3><span class="slide">Emilio Jesús Gallego Arias</span>, Pierre Jouvelot</h3>
+            <h4>Mines PARISTECH</h4>
+            <img src="sleak.gif" />
+        </hgroup>
+    </section>
+
+    <section class="slide">
+      <h2>Motivations</h2>
+      <h3>Mechanized Models for Sound Processing:</h3>
+      <ul>
+        <li>Wavetable/bandlimit synthesis.</li>
+        <li>Overlap-add processing, convolution.</li>
+      </ul>
+      <h3>Program verification:</h3>
+      <ul>
+        <li>Frequency domain semantics/match style of current development/exercise.</li>
+        <li>Filter optimization.</li>
+        <li>Beginning of study of approximate (THD) relations.</li>
+      </ul>
+      <h3>Education</h3>
+      <h3 class="slide" style="color: red">Forget about numerical issues for now.</h3>
+    </section>
+
+    <section class="slide">
+      <h2>The Discrete Fourier Transform</h2>
+
+      <p>Assume finite length signals $x \in \mathbb{C}^N$.</p>
+
+      <p>Then the DFT is:</p>
+      $$X(k) = \sum_{n=0}^{N-1} x(n) * e^{-i 2 \pi n k / N} \quad k = 0,1,2,\ldots,N-1$$
+      <p>and the inverse DFT is:</p>
+      $$x(n) = \frac{1}{N} \sum_{k=0}^{N-1} X(k) * e^{i 2 \pi n k / N} \quad k = 0,1,2,\ldots,N-1$$
+
+      <small>We ignore sampling interval, etc... as standard.</small>
+
+      <!-- http://stackoverflow.com/questions/18184927/image-hover-transition-for-span-css -->
+      <!-- <p class="slide">
+      $$\sum_i p_i \style{display: inline-block}{\class{slide}{\cdot q_j}}$$
+      </p>
+      -->
+
+    </section>
+
+    <section class="slide">
+      <h2>The DFT in Coq</h2>
+      $$
+      X(k) = \cssId{dft-sum}{\class{slide}{\sum_{n=0}^{N-1}}}
+             \cssId{dft-signal}{\class{slide}{x(n)}} *
+             \cssId{dft-unity-root}{\class{slide}{e^{-i 2 \pi n k / N}}}
+      $$
+
+      <div class="dft-text" id="dft-sum-text">
+        <h4>Bigops: mature library.</h4>
+        <p>No problem found, all the proofs straigforward.</p>
+      </div>
+
+      <div class="dft-text" id="dft-signal-text">
+        <h4>matrix.v + ssrnum.v</h4>
+        <p>No problem either, a couple of tweaks here and there.</p>
+      </div>
+
+      <div class="dft-text" id="dft-unity-root-text">
+        <h4>Complex exponentiation?</h4>
+        <p>
+           Slight problem. Q: Do we need to resort to Coq (classical) reals?
+           A: Look at what we need for the required theorems.
+        </p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>Complex Numbers in Coq</h2>
+      <h5>What we could find:</h5>
+      <ul>
+          <li>C-CORN.</li>
+          <li>Algebraic numbers in Mathcomp.</li>
+          <li>C. Cohen's two alternatives</li>
+          <li>A. Brunel complex [Does it prove the FTA?]</li>
+          <li>CoqTail (Based on stdlib, does it prove the FTA?)</li>
+      </ul>
+      <h4 class="slide">Our choice: algC</h4>
+    </section>
+
+    <section class="slide">
+      <h2>A Cool Theorem</h2>
+      <pre>
+C_prim_root_exists:
+ <- closed_field_poly_normal [poly.v]
+    {poly is factorizable}
+ <- root_prod_XsubC          [poly.v]
+    {factors are roots}
+ <- has_prim_root            [cyclic.v]
+    {be n' (>=n) diff n.-unity roots, one is primitive}
+ <- separable_prod_XsubC     [separable.v]
+    {separable factored form = uniqueness of factors}
+ <- separable_Xn_sub_1       [cyclotomic.v]
+    {X^n - 1 is separable}
+      </pre>
+
+      <h4 style="padding-top: 0.5em">We have a primitive unity root of type algC ! </h4>
+    </section>
+
+    <section class="slide">
+      <h2>Cyclic Exponentiation</h2>
+      <pre><code class="lang-coq">
+Definition expz_def (z : F) (i : 'I_n) := z ^+ i.
+Definition expz := nosimpl expz_def.
+
+Notation "x @+ n" := (expz x n)    : ring_scope.
+Notation "x @- n" := (expz x (-n)) : ring_scope.
+
+Hypothesis zP : N.-primitive_root z.
+
+Lemma expzD m n : z @+ (m + n) = z @+ m * z @+ n.
+Lemma expzM m n : z @+ (m * n) = z @+ m @+ n.
+Lemma expzV n : (z @+ n)^-1 = z @- n.
+      </code></pre>
+    </section>
+
+    <section class="slide">
+      <h2>Primitive Roots</h2>
+      <pre><code class="lang-coq">
+Notation n := N.+2.
+Hypothesis zP : n.-primitive_root z.
+
+Lemma sum_expr_z_zero : \sum_(0 <= j < n) z ^+ j = 0.
+Lemma norm_primX k    : `|z @+ k| = 1.
+Lemma prim_conjC      : z^* = z^-1.
+Lemma expz_conjC      : (z @+ k)^* = z @- k.
+Lemma z_ortho: \sum_k (z @+ (i * k)) * (z @+ (j * k))^* = n * (i == j).
+      </code></pre>
+    </section>
+
+    <section class="slide">
+      <h2>Basic Properties</h2>
+      <pre><code class="lang-coq">
+Definition dft x k := \sum_n (x n 0) * 'ω ^+ (k*n).
+
+Lemma dft_scale a x k : a * dft x k = dft (a *: x) k.
+Lemma dft_sum x y k : dft (x + y) k = dft x k + dft y k.
+Lemma dft_shifts x m k : dft (shifts x m) k = 'ω ^+ (k * m) * dft x k.
+Lemma dft_flips x (k : 'I_N) : dft (flips x) k = dft x (-k).
+      </code></pre>
+    </section>
+
+    <section class="slide">
+      <h2>(Circular) Convolution</h2>
+      $$(x \circledast y) (k) = \sum_{m=0}^{N-1} x(m) y(k-m)$$
+      $$\mathsf{DFT}_k~(x \circledast y) = X_k Y_k$$
+
+      <pre><code class="lang-coq">
+Definition convs x y := \col_k \sum_m x m 0 * y (k-m) 0.
+
+Lemma convsC : commutative convs.
+Lemma dft_convs x y k : dft (convs x y) k = dft x k * dft y k.
+[5 lines of proof...]
+      </code></pre>
+    </section>
+
+    <section class="slide">
+      <h2>More Theorems</h2>
+      <h4>The next interesting theorem is Parseval's</h4>
+      $$\sum_{n=0}^{N-1} |x(n)|^2 = \frac{1}{N} \sum_{n=0}^{N-1} |X(n)|^2 $$
+      <h5>But things being to feel a little ad-hoc.</h5>
+
+    </section>
+
+    <section class="slide">
+      <h2>Geometric Signal Theory</h2>
+
+      <h5>An inner product over a vector space is an operation satisfying:</h5>
+      $$
+      \newcommand{\ip}[2]{\langle{#1},{#2}\rangle}
+      \begin{array}{l}
+      \ip{x}{y}  = \overline{\ip{y}{x}} \\
+      \ip{ax}{y} = a\ip{x}{y} \\
+      \ip{x}{x}  \ge 0\\
+      \ip{x}{x}  = 0 => x = 0
+      \end{array}
+      $$
+      <h5>A norm can be defined:</h5>
+      $$
+      \|x\| = \sqrt{\ip{x}{x}}
+      $$
+      <p>Satisfying the usual identities, with $algC^N$ we have a pre-Hilbert space.</p>
+
+    </section>
+
+    <section class="slide">
+      <h2>Geometric Signal Theory</h2>
+      <h4>Now the DFT becomes</h4>
+      $$
+      X(\omega_k) = \ip{x^T, \omega_k}
+      ~~\text{where}~~ \omega_k = \omega^{k*0},\ldots,\omega^{k*(N-1)}
+      $$
+      <p>Most properties are an immediate consequency of matrix multiplication lemmas.</p>
+      <div class="slide">
+      <h5 >The DFT in matrix form:</h5>
+      <pre><code class="lang-coq">
+Definition W := \matrix_(i < n, j < n) 'ω ^+ (i*j).
+Lemma dftE x k : (W *m x) k 0 = dft x k.
+Lemma dftDr x y : W *m (x + y) = W *m x + W *m y.
+Proof. exact: linearD. Qed.
+      </code></pre>
+
+      </code></pre>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>In an Ideal World...</h2>
+      <p>We'd use a theory of unitary matrices to derive the rest of the results.</p>
+      <h5>Equivalent conditions (taken from WPD).</h5>
+      <ul>
+          <li>$U$ is unitary, $U^*$ is unitary.</li>
+          <li>$U$ is invertible with $U^{-1}$=$U^*$.</li>
+          <li>The columns of $U$ are an orthonormal basis of $\mathbb{C}^n$</li>
+          <li>The rows of $U$ form an orthonormal basis of $\mathbb{C}^n$.</li>
+          <li>$U$ is an isometry. <span class="slide" style="color: red;">is this right?</span></li>
+          <li>$U$ is a normal matrix with eigenvalues lying on the unit circle.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <h2>In an Ideal World...</h2>
+      <h4>We are not so far from it.</h4>
+      <ul>
+          <li>Took the definitions from classfun.v</li>
+          <li>Proved:
+      <pre><code class="lang-coq">
+Definition isometry f u v: '[f u, f v] = '[u,v].
+
+Lemma unitary_dotP : reflect (isometry (mulmx A)) (A^* *m A == 1).
+
+Lemma unitary_W : W^* *m W = N%:M.
+[4 lines/using z_ortho]
+      </code></pre>
+          </li>
+          <li>Could be much better, energy theorems are trivial corollaries.</li>
+      </ul>
+      <h6>Problem to generalize: Hierarchy of classes.</h6>
+
+    </section>
+
+    <section class="slide">
+      <h2>Going Further...</h2>
+      <h3>Algebraic Signal Processing [Püschel et al. 2006-2015]</h3>
+      <h4>Filters from a ring $A$:</h4>
+      <ul>
+          <li>$+$: parallel connection</li>
+          <li>$\cdot$: composition</li>
+          <li>$\alpha$: amplification</li>
+      </ul>
+      <h4>The operation of filtering defines an algebra.</h4>
+      <ul>
+          <li>Representation of filters using standard tools.</li>
+          <li>Irreducible modules = spectral components.</li>
+          <li>DFT: $A$-module homomorphism.</li>
+      </ul>
+      <h4>More interesting examples in the paper.</h4>
+    </section>
+
+    <section class="slide">
+      <h2>The End</h2>
+      <ul style="font-size: 1.4em;">
+          <li>Constructive proof of most results in standard book. (~1000 lines)</li>
+          <li>Hopefully is useful as a little example of using MC.</li>
+          <li>Proofs too complicated for the mathematician, but IMVHO getting there. <em>Some experiments soon.</em></li>
+          <li>Important theorem requires reals. Constructively? Rational
+              trigonometry? We have no clue.
+          </li>
+          <li>Can we help SPIRAL?</li>
+          <li>What would be a "though" theorem to test the constructive defs?</li>
+          <li>FFT / Computing</li>
+      </ul>
+    </section>
+
+    <!-- End slides. -->
+
+    <!-- Begin extension snippets. Add or remove as needed. -->
+
+    <!-- deck.navigation snippet -->
+    <div aria-role="navigation">
+      <a href="#" class="deck-prev-link" title="Previous">&#8592;</a>
+      <a href="#" class="deck-next-link" title="Next">&#8594;</a>
+    </div>
+
+    <!-- deck.status snippet -->
+    <p class="deck-status" aria-role="status">
+      <span class="deck-status-current"></span>
+      /
+      <span class="deck-status-total"></span>
+    </p>
+
+    <!-- deck.goto snippet -->
+    <form action="." method="get" class="goto-form">
+      <label for="goto-slide">Go to slide:</label>
+      <input type="text" name="slidenum" id="goto-slide" list="goto-datalist">
+      <datalist id="goto-datalist"></datalist>
+      <input type="submit" value="Go">
+    </form>
+
+    <!-- End extension snippets. -->
+  </div>
+
+<!-- Required JS files. -->
+<script src="jquery.min.js"></script>
+<script src="core/deck.core.js"></script>
+
+<!-- Extension JS files. Add or remove as needed. -->
+<script src="extensions/menu/deck.menu.js"></script>
+<script src="extensions/goto/deck.goto.js"></script>
+<script src="extensions/status/deck.status.js"></script>
+<script src="extensions/navigation/deck.navigation.js"></script>
+<script src="extensions/scale/deck.scale.js"></script>
+
+<!-- Highligh.js -->
+<link rel="stylesheet" href="external/hljs/styles/sunburst.css">
+<script src="external/hljs/highlight.pack.js"></script>
+<script>
+ hljs.configure({
+     languages: ['coq', 'ocaml']
+     });
+ hljs.initHighlightingOnLoad();
+</script>
+
+<!-- MathJax.js -->
+<script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
+
+<!-- Initialize the deck. You can put this in an external file if desired. -->
+<script>
+ $(function() {
+     // We need to wait for MathJax to render in order for deck to
+     // correctly preprocess slides.
+
+     MathJax.Hub.Config({
+         tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+     });
+
+     // From: https://github.com/mathjax/mathjax-docs/wiki/Event-when-typesetting-is-done%3F-Rescaling-after-rendering...
+     MathJax.Hub.Queue(function () {
+         $.deck('.slide');
+     });
+  });
+</script>
+</body>
+</html>
