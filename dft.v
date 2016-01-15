@@ -8,9 +8,13 @@
 (* You may distribute this file under the terms of the CeCILL-B license *)
 (************************************************************************)
 
+From mathcomp
 Require Import ssreflect ssrbool ssrfun eqtype ssrnat seq div choice.
+From mathcomp
 Require Import fintype tuple finfun bigop prime ssralg poly.
+From mathcomp
 Require Import finset fingroup perm finalg.
+From mathcomp
 Require Import matrix mxalgebra vector ssrnum zmodp ssrint intdiv algC cyclotomic.
 
 Set Implicit Arguments.
@@ -436,7 +440,7 @@ Proof. by rewrite !expzE prim_expr_mod ?exprM. Qed.
 
 Lemma expzV n : (z @+ n)^-1 = z @- n.
 Proof.
-rewrite !expzE prim_expr_mod // exprB; last exact: unitrz.
+rewrite !expzE prim_expr_mod // exprB; last exact/unitrz/zP.
   by rewrite (prim_expr_order zP) // div1r.
 by rewrite ltnW ?ltn_ord.
 Qed.
@@ -693,7 +697,7 @@ by split=>[->//|]; move/matrixP/(_ 0 0); rewrite !mxE eqxx.
 Qed.
 
 Lemma mxlift_inj (R : ringType) (x y : R) : x%:M = y%:M :> 'M_1 -> x = y.
-Proof. by rewrite -mx11_scalarP. Qed.
+Proof. by apply mx11_scalarP. (* by rewrite -mx11_scalarP. *) Qed.
 
 Lemma mulmxP (K : fieldType) (m n : nat) (A B : 'M[K]_(m, n)) :
   reflect (forall u : 'rV__, u *m A = u *m B) (A == B).
@@ -848,7 +852,7 @@ apply/eq_bigr => i _; rewrite shiftsE.
 by rewrite addrK mulrCA mulnC !exprM prim_expr_mod // exprAC addnC exprD.
 Qed.
 
-Require Import finalg.
+Require Import mathcomp.algebra.finalg.
 
 Lemma dft_flips x (k : 'I_N) : dft (flips x) k = dft x (-k).
 Proof.
